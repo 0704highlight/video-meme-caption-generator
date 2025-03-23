@@ -1,0 +1,90 @@
+/* 全局样式 */
+body {
+    background-color: #f8f9fa;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 页面标题样式 */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* 卡片样式 */
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0;
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 5px;
+    padding: 8px 16px;
+    font-weight: 500;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-weight: bold;
+}
+
+/* 表单样式 */
+.form-control, .form-select {
+    border-radius: 5px;
+    padding: 10px 15px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* 文件上传按钮美化 */
+input[type="file"] {
+    padding: 8px;
+}
+
+/* 结果页图片容器 */
+.position-relative {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* 介绍卡片等高 */
+.card.h-100 {
+    height: 100%;
+}
+
+/* 页脚样式 */
+footer {
+    border-top: 1px solid #e9ecef;
+    margin-top: 2rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .card-title {
+        font-size: 1.1rem;
+    }
+    
+    .btn-lg {
+        padding: 10px 20px;
+    }
+}
+
+/* 配文显示区域 */
+.bg-opacity-75 {
+    backdrop-filter: blur(4px);
+} 

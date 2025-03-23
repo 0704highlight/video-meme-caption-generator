@@ -1,0 +1,943 @@
+{% extends "base.html" %}
+
+{% block title %}{% if result.is_video %}视频配文结果{% else %}图像配文结果{% endif %}{% endblock %}
+
+{% block styles %}
+<style>
+    .result-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .result-image {
+        width: 100%;
+        max-width: 800px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .caption-box {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .caption-container {
+        margin-bottom: 15px;
+    }
+    
+    .caption-title {
+        font-weight: 500;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .caption-text {
+        font-size: 1.25rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+    
+    .btn-copy {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .tag {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .tag-style {
+        background-color: #e3f2fd;
+        color: #0d6efd;
+    }
+    
+    .tag-emotion {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+    
+    .video-info {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .info-heading {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+    
+    .info-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .download-section {
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .stat-box {
+        text-align: center;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        margin-bottom: 10px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0d6efd;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    /* 情感标签样式 */
+    .emotion-tag {
+        display: inline-block;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        padding: 2px 8px;
+        background-color: #fff3cd;
+        color: #664d03;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    
+    .caption-option {
+        padding: 10px 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        border: 1px solid #dee2e6;
+        transition: all 0.2s;
+    }
+    
+    .caption-option:hover {
+        background-color: #e9ecef;
+        transform: translateY(-2px);
+    }
+    
+    .caption-option.active {
+        background-color: #e3f2fd;
+        border-color: #90caf9;
+        border-left: 4px solid #1976d2;
+        font-weight: bold;
+    }
+    
+    .current-caption-label {
+        display: inline-block;
+        background-color: #28a745;
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">配文生成结果</h2>
+                <p class="text-secondary">选择您喜欢的配文，也可以自行修改</p>
+            </div>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">重新生成</a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">生成的表情包</h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ url_for('static', filename='outputs/' + result.image_path) }}" class="img-fluid rounded result-image" alt="生成的表情包" data-original="{{ result.original_image_path }}">
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('static', filename='outputs/' + result.image_path) }}" download class="btn btn-sm btn-secondary">
+                        <i class="bi bi-download"></i> 下载表情包
+                    </a>
+                    {% if result.is_video %}
+                    <a href="{{ url_for('uploaded_file', filename=result.video_path) }}" class="btn btn-sm btn-info ms-2">
+                        <i class="bi bi-film"></i> 查看原视频
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">分析信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="analysis-info">
+                        {% for key, value in result.analysis.items() %}
+                        {% if key not in ['是图像', '布局类型', '帧数量', '视频时长'] %}
+                        <div class="mb-2">
+                            <strong>{{ key }}:</strong> 
+                            {% if value is string %}
+                                {{ value }}
+                            {% elif value is iterable %}
+                                {{ value|join(', ') }}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    {% if result.emotion_tags and result.emotion_tags|length > 0 %}
+                    <div class="mt-3">
+                        <strong>情感标签:</strong>
+                        <div class="mt-1">
+                            {% for tag in result.emotion_tags %}
+                            <span class="emotion-tag">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">配文选项</h5>
+                </div>
+                <div class="card-body">
+                    {% if result.is_video %}
+                    <form id="captionForm" action="/generate_video" method="post">
+                        <input type="hidden" name="video_path" id="video_path" value="{{ result.video_path }}">
+                        
+                        <div class="mb-3">
+                            <label for="caption" class="form-label">当前配文:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="caption" name="caption" value="{{ result.caption }}" required>
+                                <button type="button" id="applyBtn" class="btn btn-primary">应用并下载</button>
+                            </div>
+                            {% if result.is_user_caption %}
+                            <div class="badge bg-success mt-2">用户自定义配文</div>
+                            {% else %}
+                            <div class="badge bg-info mt-2">系统生成配文</div>
+                            {% endif %}
+                            <div id="captionStatus" class="d-none mt-2">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                处理中...
+                            </div>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="mb-3">
+                        <label for="caption-display" class="form-label">当前配文:</label>
+                        <div class="alert alert-info">{{ result.caption }}</div>
+                        {% if result.is_user_caption %}
+                        <div class="badge bg-success">用户自定义配文</div>
+                        {% else %}
+                        <div class="badge bg-info">系统生成配文</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">系统生成的配文选项:</label>
+                        <div class="list-group">
+                            <!-- 首先显示当前配文 -->
+                            <div class="list-group-item list-group-item-action caption-option active d-flex justify-content-between align-items-center">
+                                <div>
+                                    {{ result.caption }}
+                                    <span class="current-caption-label">当前应用</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary save-caption-btn" data-caption="{{ result.caption }}" data-style="{{ result.style }}">
+                                    <i class="bi bi-star"></i> 收藏
+                                </button>
+                            </div>
+                            
+                            <!-- 然后显示其他候选配文 -->
+                            {% for alt_caption in result.alt_captions %}
+                                {% if alt_caption != result.caption %}
+                                <div class="list-group-item list-group-item-action caption-option d-flex justify-content-between align-items-center">
+                                    <div>{{ alt_caption }}</div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary save-caption-btn" data-caption="{{ alt_caption }}" data-style="{{ result.style }}">
+                                        <i class="bi bi-star"></i> 收藏
+                                    </button>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- 添加自定义配文表单 -->
+                    <div class="card mb-3 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">自定义配文</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="customCaptionForm" action="/save_custom_caption" method="post">
+                                <input type="hidden" name="image_path" value="{{ result.image_path }}">
+                                <input type="hidden" name="original_image_path" value="{{ result.original_image_path }}">
+                                <input type="hidden" name="is_video" value="{{ result.is_video }}">
+                                <input type="hidden" name="analysis" value='{{ result.analysis|tojson }}'>
+                                
+                                <div class="mb-3">
+                                    <label for="custom_caption" class="form-label">您的配文:</label>
+                                    <textarea class="form-control" id="custom_caption" name="custom_caption" rows="2" required></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="custom_style" class="form-label">风格:</label>
+                                    <select class="form-select" id="custom_style" name="custom_style" required>
+                                        <option value="funny" {% if result.style == 'funny' %}selected{% endif %}>搞笑风格</option>
+                                        <option value="sarcastic" {% if result.style == 'sarcastic' %}selected{% endif %}>讽刺风格</option>
+                                        <option value="cute" {% if result.style == 'cute' %}selected{% endif %}>可爱风格</option>
+                                        <option value="anime" {% if result.style == 'anime' %}selected{% endif %}>动漫风格</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="emotion_tags" class="form-label">情感标签 (用逗号分隔):</label>
+                                    <input type="text" class="form-control" id="emotion_tags" name="emotion_tags" placeholder="开心,愉悦,惊讶">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">保存为示例</button>
+                                <div id="customCaptionStatus" class="d-none mt-2">
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    处理中...
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- 显示情感标签 -->
+                    {% if result.emotion_tags and result.emotion_tags|length > 0 %}
+                    <div class="mb-3">
+                        <label class="form-label">情感标签:</label>
+                        <div class="d-flex flex-wrap">
+                            {% for tag in result.emotion_tags %}
+                            <span class="badge bg-primary me-1 mb-1">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 配文选项点击事件
+        const captionOptions = document.querySelectorAll('.caption-option');
+        if (captionOptions.length > 0) {
+            captionOptions.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    // 如果点击的是收藏按钮，不执行配文选择操作
+                    if (e.target.closest('.save-caption-btn')) {
+                        return;
+                    }
+                    
+                    // 获取选中的配文文本
+                    const selectedCaption = this.querySelector('div').textContent.replace('当前应用', '').trim();
+                    
+                    // 视频模式：更新输入框的值，但不自动提交
+                    const captionInput = document.getElementById('caption');
+                    if (captionInput) {
+                        captionInput.value = selectedCaption;
+                    }
+                    
+                    // 更新当前显示的配文文本 - 这是非视频模式的显示
+                    const currentCaptionDisplay = document.querySelector('.alert.alert-info');
+                    if (currentCaptionDisplay) {
+                        currentCaptionDisplay.textContent = selectedCaption;
+                    }
+                    
+                    // 图像模式处理
+                    if (!captionInput) {
+                        // 显示处理中状态
+                        const processingDiv = document.createElement('div');
+                        processingDiv.className = 'alert alert-info mt-2';
+                        processingDiv.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 正在更新配文...';
+                        
+                        // 添加到页面
+                        const captionContainer = document.querySelector('.mb-3');
+                        if (captionContainer) {
+                            // 移除旧的处理状态
+                            const oldProcessing = captionContainer.querySelector('.processing-alert');
+                            if (oldProcessing) captionContainer.removeChild(oldProcessing);
+                            
+                            // 添加新的处理状态
+                            processingDiv.classList.add('processing-alert');
+                            captionContainer.appendChild(processingDiv);
+                        }
+                    }
+                    
+                    // 将当前活跃的配文选项移除active类
+                    document.querySelector('.caption-option.active').classList.remove('active');
+                    
+                    // 给当前点击的选项添加active类
+                    this.classList.add('active');
+                    
+                    // 给当前选项添加"当前应用"标签，移除旧的标签
+                    const oldCurrentLabel = document.querySelector('.current-caption-label');
+                    if (oldCurrentLabel) {
+                        oldCurrentLabel.remove();
+                    }
+                    
+                    const currentLabel = document.createElement('span');
+                    currentLabel.className = 'current-caption-label';
+                    currentLabel.textContent = '当前应用';
+                    this.querySelector('div').appendChild(currentLabel);
+                    
+                    // 仅在图像模式下执行Canvas更新
+                    if (!document.getElementById('caption')) {
+                        // 获取原始图片路径
+                        const originalImagePath = document.querySelector('.result-image').getAttribute('data-original');
+                        
+                        // 动态更新图片，使用Canvas简单绘制新文本
+                        const resultImage = document.querySelector('.result-image');
+                        const img = new Image();
+                        img.crossOrigin = "Anonymous";
+                        img.onload = function() {
+                            // 创建Canvas
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            
+                            // 设置Canvas尺寸与图像相同
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            
+                            // 绘制原始图像
+                            ctx.drawImage(img, 0, 0);
+                            
+                            // 绘制黑色底部区域用于文本，固定高度为原图的10%，与原始生成保持一致
+                            const textAreaHeight = img.height * 0.1; // 改为10%以匹配原始图像
+                            const textY = img.height - textAreaHeight;
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                            ctx.fillRect(0, textY, img.width, textAreaHeight);
+                            
+                            // 绘制文本
+                            ctx.fillStyle = 'white';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            
+                            // 使用固定的字体样式，保持一致性
+                            const fontSize = Math.max(img.width * 0.035, 16); // 调整字体大小比例
+                            ctx.font = `normal ${fontSize}px "Microsoft YaHei", "SimHei", sans-serif`;
+                            
+                            // 文本换行处理
+                            const maxWidth = img.width * 0.9;
+                            const textX = img.width / 2;
+                            const textCenterY = textY + textAreaHeight / 2;
+                            
+                            // 简单的文本换行算法
+                            const words = selectedCaption.split('');
+                            let line = '';
+                            let lines = [];
+                            
+                            for(let i = 0; i < words.length; i++) {
+                                const testLine = line + words[i];
+                                const metrics = ctx.measureText(testLine);
+                                
+                                if (metrics.width > maxWidth && i > 0) {
+                                    lines.push(line);
+                                    line = words[i];
+                                } else {
+                                    line = testLine;
+                                }
+                            }
+                            lines.push(line);
+                            
+                            // 计算行间距并绘制文本
+                            const lineHeight = fontSize * 1.2;
+                            const totalHeight = lines.length * lineHeight;
+                            let y = textCenterY - (totalHeight / 2) + lineHeight / 2;
+                            
+                            for(let i = 0; i < lines.length; i++) {
+                                ctx.fillText(lines[i], textX, y);
+                                y += lineHeight;
+                            }
+                            
+                            // 将Canvas内容转换为图像并更新
+                            const dataURL = canvas.toDataURL('image/jpeg', 0.95);
+                            resultImage.src = dataURL;
+                            
+                            // 更新下载链接
+                            const downloadBtn = document.querySelector('.card-footer a');
+                            if (downloadBtn) {
+                                downloadBtn.href = dataURL;
+                                downloadBtn.download = "meme_" + Date.now() + ".jpg";
+                            }
+                        };
+                        
+                        // 加载原始图片，而不是当前显示的图片
+                        if (originalImagePath) {
+                            img.src = "/static/outputs/" + originalImagePath + "?t=" + new Date().getTime();
+                        } else {
+                            // 如果没有原始图片路径，使用当前图片
+                            img.src = resultImage.src + (resultImage.src.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                        }
+                        
+                        // 移除处理状态
+                        if (captionContainer && processingDiv) {
+                            setTimeout(() => {
+                                captionContainer.removeChild(processingDiv);
+                            }, 1000); // 增加处理时间至1秒，给图像处理留出时间
+                        }
+                    }
+                });
+            });
+        }
+        
+        // 应用按钮点击事件 (视频)
+        const applyBtn = document.getElementById('applyBtn');
+        if (applyBtn) {
+            applyBtn.addEventListener('click', function() {
+                const caption = document.getElementById('caption').value;
+                const videoPath = document.getElementById('video_path').value;
+                const statusDiv = document.getElementById('captionStatus');
+                
+                // 显示处理中状态
+                if (statusDiv) statusDiv.classList.remove('d-none');
+                
+                // 发送AJAX请求
+                fetch('/update_video_caption', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        video_path: videoPath,
+                        caption: caption
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 刷新图像
+                        const resultImage = document.querySelector('.result-image');
+                        if (resultImage) {
+                            // 添加时间戳防止缓存
+                            resultImage.src = '/static/outputs/' + data.image_path + '?t=' + new Date().getTime();
+                        }
+                        
+                        // 更新图片下载链接
+                        const downloadBtn = document.querySelector('.card-footer a');
+                        if (downloadBtn) {
+                            downloadBtn.href = '/static/outputs/' + data.image_path;
+                        }
+                        
+                        // 更新当前显示的配文文本 - 这适用于非视频模式
+                        const currentCaptionDisplay = document.querySelector('.alert.alert-info');
+                        if (currentCaptionDisplay) {
+                            currentCaptionDisplay.textContent = caption;
+                        }
+                        
+                        // 更新当前显示的配文文本 - 视频模式下的输入框
+                        document.getElementById('caption').value = caption;
+                        
+                        // 更新配文选项标记
+                        // 将当前活跃的配文选项移除active类
+                        const activeOption = document.querySelector('.caption-option.active');
+                        if (activeOption) {
+                            activeOption.classList.remove('active');
+                        }
+                        
+                        // 移除当前应用标签
+                        const oldCurrentLabel = document.querySelector('.current-caption-label');
+                        if (oldCurrentLabel) {
+                            oldCurrentLabel.remove();
+                        }
+                        
+                        // 查找匹配当前配文的选项
+                        let found = false;
+                        document.querySelectorAll('.caption-option').forEach(option => {
+                            const optionText = option.querySelector('div').textContent.replace('当前应用', '').trim();
+                            if (optionText === caption.trim()) {
+                                // 给当前配文选项添加active类
+                                option.classList.add('active');
+                                
+                                // 给当前选项添加"当前应用"标签
+                                const currentLabel = document.createElement('span');
+                                currentLabel.className = 'current-caption-label';
+                                currentLabel.textContent = '当前应用';
+                                option.querySelector('div').appendChild(currentLabel);
+                                
+                                found = true;
+                            }
+                        });
+                        
+                        // 如果没有找到匹配的选项，不替换第一个选项，而是创建一个新选项并插入到最前面
+                        if (!found) {
+                            // 获取选项列表容器
+                            const listGroup = document.querySelector('.list-group');
+                            if (listGroup) {
+                                // 创建新的选项
+                                const newOption = document.createElement('div');
+                                newOption.className = 'list-group-item list-group-item-action caption-option active d-flex justify-content-between align-items-center';
+                                
+                                const textDiv = document.createElement('div');
+                                textDiv.textContent = caption;
+                                
+                                const currentLabel = document.createElement('span');
+                                currentLabel.className = 'current-caption-label';
+                                currentLabel.textContent = '当前应用';
+                                textDiv.appendChild(currentLabel);
+                                
+                                const saveButton = document.createElement('button');
+                                saveButton.type = 'button';
+                                saveButton.className = 'btn btn-sm btn-outline-primary save-caption-btn';
+                                saveButton.setAttribute('data-caption', caption);
+                                saveButton.setAttribute('data-style', '{{ result.style }}');
+                                saveButton.innerHTML = '<i class="bi bi-star"></i> 收藏';
+                                
+                                // 添加收藏按钮的事件监听
+                                saveButton.addEventListener('click', function() {
+                                    const caption = this.getAttribute('data-caption');
+                                    const style = this.getAttribute('data-style');
+                                    const button = this;
+                                    
+                                    // 显示加载状态
+                                    const originalContent = button.innerHTML;
+                                    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...';
+                                    button.disabled = true;
+                                    
+                                    // 发送AJAX请求保存配文
+                                    fetch('/save_favorite_caption', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                            caption: caption,
+                                            style: style,
+                                            analysis: JSON.parse('{{ result.analysis|tojson|safe }}')
+                                        })
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // 恢复按钮状态
+                                        button.disabled = false;
+                                        
+                                        if (data.success) {
+                                            // 更新按钮为已保存状态
+                                            button.innerHTML = '<i class="bi bi-star-fill"></i> 已收藏';
+                                            button.classList.remove('btn-outline-primary');
+                                            button.classList.add('btn-success');
+                                            button.disabled = true;
+                                            
+                                            // 显示成功提示
+                                            const toast = document.createElement('div');
+                                            toast.className = 'position-fixed bottom-0 end-0 p-3';
+                                            toast.style.zIndex = '5';
+                                            toast.innerHTML = `
+                                                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                                                    <div class="toast-header bg-success text-white">
+                                                        <strong class="me-auto">成功</strong>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close" onclick="this.closest('.position-fixed').remove()"></button>
+                                                    </div>
+                                                    <div class="toast-body">
+                                                        配文已成功保存到知识库！
+                                                    </div>
+                                                </div>
+                                            `;
+                                            document.body.appendChild(toast);
+                                            
+                                            // 3秒后移除提示
+                                            setTimeout(() => {
+                                                toast.remove();
+                                            }, 3000);
+                                        } else {
+                                            // 显示错误信息
+                                            button.innerHTML = originalContent;
+                                            alert('保存失败：' + data.error);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        // 处理错误
+                                        button.innerHTML = originalContent;
+                                        button.disabled = false;
+                                        console.error('错误:', error);
+                                        alert('保存时出错，请重试');
+                                    });
+                                });
+                                
+                                newOption.appendChild(textDiv);
+                                newOption.appendChild(saveButton);
+                                
+                                // 为新选项添加点击事件
+                                newOption.addEventListener('click', function(e) {
+                                    // 如果点击的是收藏按钮，不执行配文选择操作
+                                    if (e.target.closest('.save-caption-btn')) {
+                                        return;
+                                    }
+                                    
+                                    // 获取选中的配文文本
+                                    const selectedCaption = this.querySelector('div').textContent.replace('当前应用', '').trim();
+                                    
+                                    // 视频模式：更新输入框的值，但不自动提交
+                                    const captionInput = document.getElementById('caption');
+                                    if (captionInput) {
+                                        captionInput.value = selectedCaption;
+                                    }
+                                    
+                                    // 更新当前显示的配文文本 - 这是非视频模式的显示
+                                    const currentCaptionDisplay = document.querySelector('.alert.alert-info');
+                                    if (currentCaptionDisplay) {
+                                        currentCaptionDisplay.textContent = selectedCaption;
+                                    }
+                                    
+                                    // 将当前活跃的配文选项移除active类
+                                    document.querySelector('.caption-option.active').classList.remove('active');
+                                    
+                                    // 给当前点击的选项添加active类
+                                    this.classList.add('active');
+                                    
+                                    // 给当前选项添加"当前应用"标签，移除旧的标签
+                                    const oldCurrentLabel = document.querySelector('.current-caption-label');
+                                    if (oldCurrentLabel) {
+                                        oldCurrentLabel.remove();
+                                    }
+                                    
+                                    const currentLabel = document.createElement('span');
+                                    currentLabel.className = 'current-caption-label';
+                                    currentLabel.textContent = '当前应用';
+                                    this.querySelector('div').appendChild(currentLabel);
+                                });
+                                
+                                // 插入到列表的顶部
+                                listGroup.insertBefore(newOption, listGroup.firstChild);
+                            }
+                        }
+                        
+                        // 如果有生成视频，添加视频下载链接
+                        if (data.video_path) {
+                            // 查找视频下载按钮，如果不存在则创建一个
+                            let videoDownloadBtn = document.querySelector('.video-download-btn');
+                            if (!videoDownloadBtn) {
+                                videoDownloadBtn = document.createElement('a');
+                                videoDownloadBtn.className = 'btn btn-sm btn-primary ms-2 video-download-btn';
+                                videoDownloadBtn.innerHTML = '<i class="bi bi-download"></i> 下载带配文视频';
+                                document.querySelector('.card-footer').appendChild(videoDownloadBtn);
+                            }
+                            
+                            // 设置下载链接
+                            videoDownloadBtn.href = '/static/outputs/' + data.video_path;
+                            videoDownloadBtn.download = data.video_path;
+                            videoDownloadBtn.style.display = 'inline-block';
+                            
+                            // 添加成功提示
+                            const successDiv = document.createElement('div');
+                            successDiv.className = 'alert alert-success mt-2';
+                            successDiv.textContent = '视频已成功生成，点击下载按钮获取';
+                            
+                            // 添加到页面（临时提示）
+                            const captionContainer = document.querySelector('.mb-3');
+                            if (captionContainer) {
+                                // 移除旧的成功提示
+                                const oldSuccess = captionContainer.querySelector('.alert-success');
+                                if (oldSuccess) captionContainer.removeChild(oldSuccess);
+                                
+                                captionContainer.appendChild(successDiv);
+                                // 3秒后自动移除提示
+                                setTimeout(() => {
+                                    successDiv.remove();
+                                }, 3000);
+                            }
+                        }
+                        
+                        // 隐藏处理中状态
+                        if (statusDiv) statusDiv.classList.add('d-none');
+                    } else {
+                        alert('更新配文失败: ' + data.error);
+                        if (statusDiv) statusDiv.classList.add('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('错误:', error);
+                    // 显示错误消息
+                    alert('更新配文时出错：' + (error.message || '网络错误'));
+                    
+                    // 恢复状态显示
+                    if (statusDiv) statusDiv.classList.add('d-none');
+                    
+                    // 添加错误提示
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger mt-2';
+                    errorDiv.textContent = '更新配文失败，请重试';
+                    
+                    // 添加到页面（临时提示）
+                    const captionContainer = document.querySelector('.mb-3');
+                    if (captionContainer) {
+                        captionContainer.appendChild(errorDiv);
+                        // 3秒后自动移除提示
+                        setTimeout(() => {
+                            errorDiv.remove();
+                        }, 3000);
+                    }
+                });
+            });
+        }
+        
+        // 处理自定义配文表单
+        const customCaptionForm = document.getElementById('customCaptionForm');
+        if (customCaptionForm) {
+            customCaptionForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 显示处理中状态
+                const statusDiv = document.getElementById('customCaptionStatus');
+                if (statusDiv) statusDiv.classList.remove('d-none');
+                
+                // 收集表单数据
+                const formData = new FormData(customCaptionForm);
+                
+                // 发送AJAX请求
+                fetch('/save_custom_caption', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 隐藏处理中状态
+                        if (statusDiv) statusDiv.classList.add('d-none');
+                        
+                        // 创建成功提示
+                        const successAlert = document.createElement('div');
+                        successAlert.className = 'alert alert-success mt-2';
+                        successAlert.textContent = '自定义配文已成功保存，将用于未来的配文生成！';
+                        
+                        // 添加到表单下方
+                        customCaptionForm.appendChild(successAlert);
+                        
+                        // 3秒后自动移除提示
+                        setTimeout(() => {
+                            successAlert.remove();
+                        }, 3000);
+                        
+                        // 清空表单
+                        document.getElementById('custom_caption').value = '';
+                        document.getElementById('emotion_tags').value = '';
+                    } else {
+                        // 隐藏处理中状态
+                        if (statusDiv) statusDiv.classList.add('d-none');
+                        
+                        // 显示错误提示
+                        alert('保存自定义配文失败: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('错误:', error);
+                    if (statusDiv) statusDiv.classList.add('d-none');
+                    alert('保存自定义配文时出错');
+                });
+            });
+        }
+        
+        // 处理收藏按钮的点击事件
+        const saveCaptionBtns = document.querySelectorAll('.save-caption-btn');
+        if (saveCaptionBtns.length > 0) {
+            saveCaptionBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const caption = this.getAttribute('data-caption');
+                    const style = this.getAttribute('data-style');
+                    const button = this;
+                    
+                    // 显示加载状态
+                    const originalContent = button.innerHTML;
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...';
+                    button.disabled = true;
+                    
+                    // 发送AJAX请求保存配文
+                    fetch('/save_favorite_caption', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            caption: caption,
+                            style: style,
+                            analysis: JSON.parse('{{ result.analysis|tojson|safe }}')
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 恢复按钮状态
+                        button.disabled = false;
+                        
+                        if (data.success) {
+                            // 更新按钮为已保存状态
+                            button.innerHTML = '<i class="bi bi-star-fill"></i> 已收藏';
+                            button.classList.remove('btn-outline-primary');
+                            button.classList.add('btn-success');
+                            button.disabled = true;
+                            
+                            // 显示成功提示
+                            const toast = document.createElement('div');
+                            toast.className = 'position-fixed bottom-0 end-0 p-3';
+                            toast.style.zIndex = '5';
+                            toast.innerHTML = `
+                                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                                    <div class="toast-header bg-success text-white">
+                                        <strong class="me-auto">成功</strong>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close" onclick="this.closest('.position-fixed').remove()"></button>
+                                    </div>
+                                    <div class="toast-body">
+                                        配文已成功保存到知识库！
+                                    </div>
+                                </div>
+                            `;
+                            document.body.appendChild(toast);
+                            
+                            // 3秒后移除提示
+                            setTimeout(() => {
+                                toast.remove();
+                            }, 3000);
+                        } else {
+                            // 显示错误信息
+                            button.innerHTML = originalContent;
+                            alert('保存失败：' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        // 处理错误
+                        button.innerHTML = originalContent;
+                        button.disabled = false;
+                        console.error('错误:', error);
+                        alert('保存时出错，请重试');
+                    });
+                });
+            });
+        }
+    });
+</script>
+{% endblock %} 

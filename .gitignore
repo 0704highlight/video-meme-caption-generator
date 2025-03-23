@@ -1,0 +1,49 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Application specific
+*.log
+.env
+
+# Large model files and embeddings
+m3e-base/
+text-embedding-ada-002/
+*.onnx
+*.pt
+*.pth
+*.bin
+
+# Uploaded and generated content
+uploads/
+static/outputs/
+output/
+debug/
+
+# Database files
+*.db
+*.sqlite

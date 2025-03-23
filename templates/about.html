@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}关于 - 视频表情包配文生成器{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">关于本项目</h3>
+            </div>
+            <div class="card-body">
+                <h4 class="mb-4">视频表情包配文生成器</h4>
+                
+                <p class="lead">这是一个基于人工智能的表情包配文生成工具，能够从视频中提取关键帧并自动生成有趣、符合语境的配文。</p>
+                
+                <h5 class="mt-4 mb-3">主要功能</h5>
+                <ul class="list-group mb-4">
+                    <li class="list-group-item">
+                        <i class="bi bi-film text-primary me-2"></i>
+                        <strong>关键帧提取</strong>：从视频中均匀提取关键帧以捕捉精彩瞬间
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-grid-3x3 text-primary me-2"></i>
+                        <strong>多种布局</strong>：支持网格、水平、垂直和单帧等多种布局方式
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-emoji-laughing text-primary me-2"></i>
+                        <strong>多种风格</strong>：支持搞笑、讽刺、可爱和动漫等多种配文风格
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-stars text-primary me-2"></i>
+                        <strong>动漫特化</strong>：针对动漫内容提供特定的配文风格与表达方式
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-search text-primary me-2"></i>
+                        <strong>RAG增强</strong>：利用检索增强生成技术提高配文质量
+                    </li>
+                </ul>
+                
+                <h5 class="mt-4 mb-3">技术架构</h5>
+                <p>本项目采用了以下技术：</p>
+                <ul>
+                    <li>Flask Web框架</li>
+                    <li>OpenCV 视频处理</li>
+                    <li>FAISS 向量检索</li>
+                    <li>视觉语言模型 (VLM) 图像分析</li>
+                    <li>大语言模型 (LLM) 配文生成</li>
+                </ul>
+                
+                <div class="alert alert-info mt-4">
+                    <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>使用提示</h5>
+                    <p class="mb-0">如果没有配置API密钥，系统会使用模拟数据进行演示。如需完整体验，请配置相应的VLM和LLM API。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 表情包配文生成器{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">生成表情包配文</h3>
+            </div>
+            
+            <div class="card-body">
+                <form method="post" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>上传媒体</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="nav nav-tabs mb-3" id="uploadTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-upload" type="button" role="tab" aria-controls="video-upload" aria-selected="true">上传视频</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-upload" type="button" role="tab" aria-controls="image-upload" aria-selected="false">上传图片</button>
+                                </li>
+                            </ul>
+                            
+                            <div class="tab-content" id="uploadTabsContent">
+                                <div class="tab-pane fade show active" id="video-upload" role="tabpanel" aria-labelledby="video-tab">
+                                    <div class="mb-3">
+                                        <label for="video" class="form-label">选择视频文件</label>
+                                        <input type="file" class="form-control" id="video" name="video" accept=".mp4,.avi,.mov,.wmv,.mkv">
+                                        <div class="form-text">支持的格式: MP4, AVI, MOV, WMV, MKV (最大16MB)</div>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="layout">选择布局:</label>
+                                        <select class="form-control" id="layout" name="layout">
+                                            {% for layout in layouts %}
+                                            <option value="{{ layout.id }}">{{ layout.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <strong>网格布局</strong>: 2x2网格展示关键帧<br>
+                                                <strong>水平布局</strong>: 水平排列关键帧<br>
+                                                <strong>垂直布局</strong>: 垂直排列关键帧<br>
+                                                <strong>单帧布局</strong>: 仅展示单个关键帧<br>
+                                                <strong>时间序列布局</strong>: 垂直排列帧并添加时间顺序箭头<br>
+                                                <strong>网格+序列布局</strong>: 顶部显示网格，底部显示附加关键帧
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="tab-pane fade" id="image-upload" role="tabpanel" aria-labelledby="image-tab">
+                                    <div class="mb-3">
+                                        <label for="image" class="form-label">选择图片文件</label>
+                                        <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png,.gif,.webp">
+                                        <div class="form-text">支持的格式: JPG, JPEG, PNG, GIF, WEBP (最大16MB)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">配文设置</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="style" class="form-label">配文风格</label>
+                                <select class="form-select" id="style" name="style">
+                                    {% for style in styles %}
+                                    <option value="{{ style.id }}">{{ style.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">选择生成配文的风格</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 动漫风格参数，只有选择动漫风格时才显示 -->
+                    <div id="anime-params" class="mb-3" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">动漫风格参数</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="anime_type" class="form-label">动漫类型</label>
+                                    <select class="form-select" id="anime_type" name="anime_type">
+                                        {% for anime_type in anime_types %}
+                                        <option value="{{ anime_type }}">{{ anime_type }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="character_trait" class="form-label">角色特征</label>
+                                    <select class="form-select" id="character_trait" name="character_trait">
+                                        {% for trait in anime_traits %}
+                                        <option value="{{ trait }}" {% if trait == "元气" %}selected{% endif %}>{{ trait }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="use_emoticons" name="use_emoticons" checked>
+                                    <label class="form-check-label" for="use_emoticons">
+                                        使用颜文字表情 (如 ╭(╯^╰)╮)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="rag_enabled" name="rag_enabled" checked>
+                        <label class="form-check-label" for="rag_enabled">启用RAG检索增强生成</label>
+                        <div class="form-text">使用历史数据库中的相似案例增强配文生成效果</div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-magic me-1"></i>
+                            生成表情包配文
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-film text-primary mb-3" style="font-size: 2rem;"></i>
+                <h5 class="card-title">关键帧提取</h5>
+                <p class="card-text">从视频中均匀提取4帧关键帧，并按照选择的布局方式组织</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-eye text-primary mb-3" style="font-size: 2rem;"></i>
+                <h5 class="card-title">视觉分析</h5>
+                <p class="card-text">使用视觉语言大模型分析关键帧，提取人物动作、情感表现、外貌特征和视频场景</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-chat-square-text text-primary mb-3" style="font-size: 2rem;"></i>
+                <h5 class="card-title">RAG增强生成</h5>
+                <p class="card-text">利用检索增强生成技术，基于历史数据库生成更符合表情包风格的配文</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 预览上传的视频
+    document.getElementById('video').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // 可以在这里添加额外的文件验证逻辑
+            console.log('选择的文件:', file.name, file.size, file.type);
+        }
+    });
+    
+    // 控制动漫参数显示/隐藏
+    document.getElementById('style').addEventListener('change', function() {
+        const animeParams = document.getElementById('anime-params');
+        if (this.value === 'anime') {
+            animeParams.style.display = 'block';
+        } else {
+            animeParams.style.display = 'none';
+        }
+    });
+    
+    // 页面加载时检查是否选择了动漫风格
+    document.addEventListener('DOMContentLoaded', function() {
+        const styleSelect = document.getElementById('style');
+        const animeParams = document.getElementById('anime-params');
+        
+        if (styleSelect.value === 'anime') {
+            animeParams.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

@@ -36,8 +36,8 @@
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/0704highlight/video-meme-caption-generato.git
-cd video-meme-caption-generato
+git clone https://github.com/0704highlight/video-meme-caption-generator.git
+cd video-meme-caption-generator
 ```
 
 2. 激活虚拟环境

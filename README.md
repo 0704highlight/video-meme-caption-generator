@@ -36,11 +36,12 @@
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/yourusername/video-meme-caption-generator.git
-cd video-meme-caption-generator
+git clone https://github.com/0704highlight/video-meme-caption-generato.git
+cd video-meme-caption-generato
 ```
 
 2. 激活虚拟环境
+```bash
 # Windows
 venv\Scripts\activate
 # Mac/Linux
@@ -92,4 +93,4 @@ python app.py
 
 ## 许可证
 
-本项目使用MIT许可证 - 详情请查看`LICENSE`文件。 
+本项目使用MIT许可证 - 详情请查看`LICENSE`文件。
